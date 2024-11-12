@@ -1,11 +1,13 @@
 import numpy as np
-import matplotlib as plt
+import matplotlib.pyplot as plt
+from matplotlib.colors import LogNorm
 import cv2
 import argparse
 
 class DiscreteFourierTransform:
     def __init__(self, image):
         self.image = image
+        
         
     def dft(self, signal):
         N = len(signal)
@@ -40,11 +42,33 @@ class DiscreteFourierTransform:
             col_transformed_image[:, j] = self.fft(row_transformed_image[:, j])
         
         return col_transformed_image
+    
+    def display_fft(self):
+        fft_result = self.fft_2d()
+
+        # Take the magnitude of the FFT result for visualization
+        magnitude_spectrum = np.abs(fft_result)
+
+        # Plot the original and transformed images
+        fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+
+        # Original image
+        axs[0].imshow(self.image, cmap='gray')
+        axs[0].set_title("Original Image")
+        axs[0].axis('off')
+
+        # Fourier Transform (log scaled)
+        axs[1].imshow(magnitude_spectrum, norm=LogNorm(), cmap='gray')
+        axs[1].set_title("Fourier Transform (Log Scale)")
+        axs[1].axis('off')
+
+        plt.show()
+        
                 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument('-m', type=int, required=True, help='Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime')
-    parser.add_argument('-i', type=str, required=True, help='Filename of the image for the DFT', default='moonlanding.png')
+    parser.add_argument('-m', type=int, required=False, help='Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime', default=1)
+    parser.add_argument('-i', type=str, required=False, help='Filename of the image for the DFT', default='moonlanding.png')
     
     args = parser.parse_args()
     mode = args.m
@@ -58,7 +82,7 @@ def main():
     
     # Perform requested mode
     if mode == 1:
-        dft.fft_2d()
+        dft.display_fft()
     elif mode == 2:
         dft.denoise()
     elif mode == 3:

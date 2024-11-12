@@ -1,69 +1,74 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import cv2
+import argparse
 
-def dft_naive(x):
-    """Compute the DFT of a 1D array x using the naive approach."""
-    N = len(x)
-    X = np.zeros(N, dtype=complex)  # Output array to store DFT results
-    for k in range(N):
-        for n in range(N):
-            X[k] += x[n] * np.exp(-2j * np.pi * k * n / N)
-    return X
-
-def idft_naive(X):
-    """Compute the Inverse DFT of a 1D array X using the naive approach."""
-    N = len(X)
-    x = np.zeros(N, dtype=complex)  # Output array to store the inverse DFT results
-    for n in range(N):
+class DiscreteFourierTransform:
+    def __init__(self, image):
+        self.image = image
+        
+    def dft(self, signal):
+        N = len(signal)
+        X = np.zeros(N, dtype=complex)
+        
         for k in range(N):
-            x[n] += X[k] * np.exp(2j * np.pi * k * n / N)
-        x[n] /= N  # Normalize by dividing by N
-    return x
-
-def fft_combined(x):
-    """
-    A combined recursive implementation of the 1D Cooley-Tukey FFT.
-    This function assumes the input length is a power of 2.
-    """
-    N = len(x)
+            for n in range(N):
+                X[k] += signal[n] * np.exp(-2j * np.pi * k * n / N)
+                
+        return X
     
-    # Base case: If there's only one element, return it as is
-    if N == 1:
-        return x
+    def fft(self, signal, size_threshold=8):
+        N = len(signal)
+        
+        if N <= size_threshold:
+            return self.dft(signal)
+        
+        even = self.fft(signal[0::2])
+        odd = self.fft(signal[1::2])
+        
+        coeff = np.exp(-2j * np.pi * np.arange(N) / N)
+        
+        return np.concatenate([even + coeff[:N//2] * odd, even + coeff[N//2:] * odd])
     
-    # Recursive calls to compute FFT of even and odd parts
-    X_even = fft_combined(x[::2])
-    X_odd = fft_combined(x[1::2])
-    
-    # Precompute the twiddle factors
-    factor = np.exp(-2j * np.pi * np.arange(N) / N)
-    
-    # Use the first half of the factor for "addition" and the second half for "subtraction" effects
-    # This achieves the same as explicit addition and subtraction in the Cooley-Tukey FFT
-    X = np.concatenate([
-        X_even + factor[:N // 2] * X_odd,    # First half with positive twiddle factors
-        X_even + factor[N // 2:] * X_odd     # Second half with "negative" twiddle factors (mirrored phase)
-    ])
-    
-    return X
-
-def dft_2d(matrix):
-    """Compute the 2D Discrete Fourier Transform (DFT) of a 2D matrix."""
-    # Step 1: Apply the 1D DFT to each row
-    rows_transformed = np.zeros_like(matrix, dtype=complex)
-    for i in range(matrix.shape[0]):
-        rows_transformed[i, :] = fft_combined(matrix[i, :])
-
-    # Step 2: Apply the 1D DFT to each column of the result
-    cols_transformed = np.zeros_like(rows_transformed, dtype=complex)
-    for j in range(rows_transformed.shape[1]):
-        cols_transformed[:, j] = fft_combined(rows_transformed[:, j])
-
-    return cols_transformed
-
-
+    def fft_2d(self):
+        row_transformed_image = np.zeros_like(self.image, dtype=complex)
+        for i in range(self.image.shape[0]):
+            row_transformed_image[i, :] = self.fft(self.image[i, :])
+            
+        col_transformed_image = np.zeros_like(row_transformed_image, dtype=complex)
+        for j in range(row_transformed_image.shape[1]):
+            col_transformed_image[:, j] = self.fft(row_transformed_image[:, j])
+        
+        return col_transformed_image
+                
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-m', type=int, required=True, help='Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime')
+    parser.add_argument('-i', type=str, required=True, help='Filename of the image for the DFT', default='moonlanding.png')
+    
+    args = parser.parse_args()
+    mode = args.m
+    filename = args.i
+    
+    # Read the image
+    image = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
+    
+    #Create DFT class
+    dft = DiscreteFourierTransform(image)
+    
+    # Perform requested mode
+    if mode == 1:
+        dft.fft_2d()
+    elif mode == 2:
+        dft.denoise()
+    elif mode == 3:
+        dft.compress()
+    elif mode == 4:
+        dft.plot_runtime()
+    else:
+        print('Invalid mode. Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime')
+        exit()
+    
     return 0
     
 if __name__ == '__main__':

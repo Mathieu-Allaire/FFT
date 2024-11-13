@@ -92,7 +92,10 @@ class DiscreteFourierTransform:
         
         return col_transformed_image
     
-    def display_denoise(self):
+    def plot_compression(self):
+        return 0
+    
+    def plot_denoise(self):
         frequency_domaine = self.fft_2d()
 
         magnitude = np.abs(frequency_domaine)
@@ -110,10 +113,8 @@ class DiscreteFourierTransform:
         axs[1].set_title("FFT Denoised Image")
 
         plt.show()
-
-
     
-    def display_fft(self):
+    def plot_fft(self):
         frequency_domaine = self.fft_2d()
         magnitude = np.abs(frequency_domaine)
         
@@ -148,9 +149,9 @@ def main():
     if mode == 1:
         dft.display_fft()
     elif mode == 2:
-        dft.display_denoise()
+        dft.plot_denoise()
     elif mode == 3:
-        dft.compress()
+        dft.plot_compression()
     elif mode == 4:
         dft.plot_runtime()
     else:

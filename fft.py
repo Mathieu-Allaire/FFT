@@ -6,12 +6,22 @@ import argparse
 
 class DiscreteFourierTransform:
     def __init__(self, image):
-        self.image = image
+        self.original_image = image
+        self.resized_image = self.resize_image(image)
         
+    def resize_image(self, image):
+        row, col = image.shape
+        resized_row, resized_col = 2**int(np.ceil(np.log2(row))), 2**int(np.ceil(np.log2(col)))
+        print("Resized image dimensions:", (resized_row, resized_col))
         
+        padded_image = np.zeros((resized_row, resized_col), dtype=np.uint8)
+        padded_image[:row, :col] = image
+        
+        return padded_image 
+    
     def dft(self, signal):
         N = len(signal)
-        X = np.zeros(N, dtype=complex)
+        X = np.zeros(N, dtype=np.complex128)
         
         for k in range(N):
             for n in range(N):
@@ -33,38 +43,49 @@ class DiscreteFourierTransform:
         return np.concatenate([even + coeff[:N//2] * odd, even + coeff[N//2:] * odd])
     
     def fft_2d(self):
-        row_transformed_image = np.zeros_like(self.image, dtype=complex)
-        for i in range(self.image.shape[0]):
-            row_transformed_image[i, :] = self.fft(self.image[i, :])
-            
-        col_transformed_image = np.zeros_like(row_transformed_image, dtype=complex)
-        for j in range(row_transformed_image.shape[1]):
+        row, col = self.resized_image.shape
+        
+        row_transformed_image = np.zeros((row, col), dtype=np.complex128)
+        for i in range(row):
+            row_transformed_image[i, :] = self.fft(self.resized_image[i, :])
+        
+        col_transformed_image = np.zeros((row, col), dtype=np.complex128)
+        for j in range(col):
             col_transformed_image[:, j] = self.fft(row_transformed_image[:, j])
         
         return col_transformed_image
     
     def display_fft(self):
+        # Custom FFT result on the resized image
         fft_result = self.fft_2d()
+        # Crop the FFT result to the original image dimensions
+        magnitude_spectrum_custom = np.abs(fft_result)[:self.original_image.shape[0], :self.original_image.shape[1]]
 
-        # Take the magnitude of the FFT result for visualization
-        magnitude_spectrum = np.abs(fft_result)
+        # Built-in FFT result using np.fft.fft2 for comparison
+        fft_builtin = np.fft.fft2(self.resized_image)
+        magnitude_spectrum_builtin = np.abs(fft_builtin)[:self.original_image.shape[0], :self.original_image.shape[1]]
 
-        # Plot the original and transformed images
-        fig, axs = plt.subplots(1, 2, figsize=(12, 6))
+        # Plot the original, custom FFT, and built-in FFT images
+        fig, axs = plt.subplots(1, 3, figsize=(18, 6))
 
-        # Original image
-        axs[0].imshow(self.image, cmap='gray')
+        # Original image (full size)
+        axs[0].imshow(self.original_image, cmap='gray')
         axs[0].set_title("Original Image")
         axs[0].axis('off')
 
-        # Fourier Transform (log scaled)
-        axs[1].imshow(magnitude_spectrum, norm=LogNorm(), cmap='gray')
-        axs[1].set_title("Fourier Transform (Log Scale)")
+        # Custom Fourier Transform (log scaled)
+        axs[1].imshow(magnitude_spectrum_custom, norm=LogNorm(), cmap='gray')
+        axs[1].set_title("Custom Fourier Transform (Log Scale)")
         axs[1].axis('off')
 
+        # Built-in Fourier Transform (log scaled)
+        axs[2].imshow(magnitude_spectrum_builtin, norm=LogNorm(), cmap='gray')
+        axs[2].set_title("Built-in Fourier Transform (Log Scale)")
+        axs[2].axis('off')
+
         plt.show()
+
         
-                
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', type=int, required=False, help='Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime', default=1)
@@ -74,10 +95,9 @@ def main():
     mode = args.m
     filename = args.i
     
-    # Read the image
+    # Read the image in grayscale
     image = cv2.imread(filename, cv2.IMREAD_GRAYSCALE)
     
-    #Create DFT class
     dft = DiscreteFourierTransform(image)
     
     # Perform requested mode
@@ -92,8 +112,6 @@ def main():
     else:
         print('Invalid mode. Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime')
         exit()
-    
-    return 0
     
 if __name__ == '__main__':
     main()

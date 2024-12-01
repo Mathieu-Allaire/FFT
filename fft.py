@@ -397,6 +397,6 @@ def main():
         print('Invalid mode. Mode: 1 for Fast mode, 2 for Low Frequency Denoise, 3 for Compress, 4 for Plot runtime, '
               '5 for High Frequency Denoise, 6 For Both High and Low Frequency Denoise, 7 for Compression and Frequency filtering')
         exit()
-    
+
 if __name__ == '__main__':
     main()

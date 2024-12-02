@@ -77,7 +77,7 @@ class DiscreteFourierTransform:
         coeff = np.exp(2j * np.pi * np.arange(N) / N)
         
         # Combine the results using symmetry properties of the IDFT
-        return np.concatenate([even + coeff[:N//2] * odd, even + coeff[N//2:] * odd])
+        return np.concatenate([even + coeff[:N//2] * odd, even + coeff[N//2:] * odd]) / 2
     
     def dft_2d(self):
         row, col = self.resized_image.shape
@@ -219,34 +219,6 @@ class DiscreteFourierTransform:
         
         plt.show()
         
-    def plot_denoise_thresholding(self, threshold=0.0009):
-        frequency_domain = self.fft_2d()
-        row, col = frequency_domain.shape
-
-        # Thresholding the magnitude of the frequency domain
-        magnitude = np.abs(frequency_domain)
-        threshold = np.quantile(magnitude, 1 - threshold)
-        frequency_domain[magnitude > threshold] = 0
-
-        non_zero_coefficients = np.count_nonzero(frequency_domain)
-        total_coefficients = row * col
-        print(f'Non-zero coefficients: {non_zero_coefficients}')
-        print(f'Fraction of non-zero coefficients: {non_zero_coefficients/total_coefficients}')
-
-        # Perform the inverse Fourier Transform to get the denoised image
-        denoised_image = self.ifft_2d(frequency_domain)
-        denoised_image = np.real(denoised_image)
-        denoised_image = denoised_image[:self.original_image.shape[0], :self.original_image.shape[1]]
-        
-        fig, axs = plt.subplots(1, 2)
-        axs[0].imshow(self.original_image, cmap='gray')
-        axs[0].set_title("Original Image")
-
-        axs[1].imshow(denoised_image, cmap='gray')
-        axs[1].set_title(f"Thresholding Denoised Image")
-
-        plt.show()
-        
     def plot_compression(self):
         frequency_domain = self.fft_2d()
         magnitude = np.abs(frequency_domain)
@@ -361,9 +333,9 @@ class DiscreteFourierTransform:
         axs[0].imshow(np.abs(frequency_domain), norm = LogNorm())
         axs[0].set_title("Custom FFT")
 
-        # Plot built-in FFT log-scaled
+        # Plot Numpy FFT log-scaled
         axs[1].imshow(np.abs(frequency_domain_numpy), norm = LogNorm())
-        axs[1].set_title("Built-in FFT")
+        axs[1].set_title("Numpy FFT")
         
         # Plot the difference
         difference = frequency_domain - frequency_domain_numpy
@@ -372,6 +344,44 @@ class DiscreteFourierTransform:
 
         plt.show()
         
+    def validate_ifft(self):
+        # Compute the FFT using NumPy for consistency
+        frequency_domain = np.fft.fft2(self.resized_image)
+
+        # Custom IFFT
+        reconstructed_image_custom = self.ifft_2d(frequency_domain)
+
+        # Numpy IFFT
+        reconstructed_image_numpy = np.fft.ifft2(frequency_domain)
+
+        # Convert to real components and crop to original image size
+        reconstructed_image_custom = np.real(reconstructed_image_custom)
+        reconstructed_image_custom = reconstructed_image_custom[:self.original_image.shape[0], :self.original_image.shape[1]]
+
+        reconstructed_image_numpy = np.real(reconstructed_image_numpy)
+        reconstructed_image_numpy = reconstructed_image_numpy[:self.original_image.shape[0], :self.original_image.shape[1]]
+        
+        # Calculate the difference
+        difference = np.abs(reconstructed_image_custom - reconstructed_image_numpy)
+
+        # Compare the results
+        fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+
+        # Plot custom IFFT result
+        axs[0].imshow(reconstructed_image_custom, cmap='gray')
+        axs[0].set_title("Custom IFFT")
+
+        # Plot Numpy IFFT result
+        axs[1].imshow(reconstructed_image_numpy, cmap='gray')
+        axs[1].set_title("Numpy IFFT Result")
+
+        # Plot the difference
+        axs[2].imshow(difference, cmap='hot')
+        axs[2].set_title("Difference (Thresholded)")
+
+        plt.show()
+
+    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', type=int, required=False, help='Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime', default=1)
@@ -403,8 +413,12 @@ def main():
         dft.plot_compression_alternative()
     elif mode == 8:
         dft.validate_fft()
+    elif mode == 9:
+        dft.validate_ifft()
     else:
-        print('Invalid mode. Mode: 1 for Fast mode, 2 for High Frequency Denoise, 3 for Compress, 4 for Plot runtime, 5 for Low Frequency Denoise, 6 for Thresholding Denoise, 7 for Alternative Compression, 8 for Fast mode validation')
+        print('''Invalid mode. Mode: 1 for Fast mode, 2 for High Frequency Denoise, 3 for Compress, 4 for Plot runtime, 
+                5 for Low Frequency Denoise, 6 for Thresholding Denoise, 7 for Alternative Compression, 8 for Fast mode validation, 
+                9 for Inverse Fast mode validation''')
         exit()
     
 if __name__ == '__main__':

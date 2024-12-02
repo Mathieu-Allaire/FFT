@@ -102,12 +102,12 @@ class DiscreteFourierTransform:
         axs[0].imshow(self.original_image, cmap='gray')
         axs[0].set_title("Original Image")
 
-        axs[1].imshow(np.abs(frequency_domain)[:self.original_image.shape[0], :self.original_image.shape[1]], norm=LogNorm())
+        axs[1].imshow(np.abs(frequency_domain), norm=LogNorm())
         axs[1].set_title("Fourier Transform")
         
         plt.show()
     
-    def plot_denoise(self, low_frequency_threshold=0.1):
+    def plot_denoise_high_frequency(self, low_frequency_threshold=0.1):
         frequency_domain = self.fft_2d()
         row, col = frequency_domain.shape
         
@@ -116,6 +116,11 @@ class DiscreteFourierTransform:
         
         frequency_domain[low_frq_row_start:low_frq_row_end, :] = 0
         frequency_domain[:, low_frq_col_start:low_frq_col_end] = 0
+        
+        non_zero_coefficients = np.count_nonzero(frequency_domain)
+        total_coefficients = row * col
+        print(f'Non-zero coefficients: {non_zero_coefficients}')
+        print(f'Fraction of non-zero coefficients: {non_zero_coefficients/total_coefficients}')
         
         denoised_image = self.ifft_2d(frequency_domain)
         denoised_image = np.real(denoised_image)
@@ -126,8 +131,64 @@ class DiscreteFourierTransform:
         axs[0].set_title("Original Image")
         
         axs[1].imshow(denoised_image, cmap='gray')
-        axs[1].set_title("Denoised Image")
+        axs[1].set_title("Low-Frequency Denoised Image")
         
+        plt.show()
+        
+    def plot_denoise_low_frequency(self, high_frequency_threshold=0.015):
+        frequency_domain = self.fft_2d()
+        row, col = frequency_domain.shape
+        
+        high_frq_row_start, high_frq_row_end = int(row*high_frequency_threshold), int(row*(1-high_frequency_threshold))
+        high_frq_col_start, high_frq_col_end = int(col*high_frequency_threshold), int(col*(1-high_frequency_threshold))
+        
+        frequency_domain[:high_frq_row_start, :high_frq_col_start] = 0
+        frequency_domain[:high_frq_row_start, high_frq_col_end:] = 0
+        frequency_domain[high_frq_row_end:, :high_frq_col_start] = 0
+        frequency_domain[high_frq_row_end:, high_frq_col_end:] = 0 
+        
+        non_zero_coefficients = np.count_nonzero(frequency_domain)
+        total_coefficients = row * col
+        print(f'Non-zero coefficients: {non_zero_coefficients}')
+        print(f'Fraction of non-zero coefficients: {non_zero_coefficients/total_coefficients}')
+        
+        denoised_image = self.ifft_2d(frequency_domain)
+        denoised_image = np.real(denoised_image)
+        denoised_image = denoised_image[:self.original_image.shape[0], :self.original_image.shape[1]]
+        
+        fig, axs = plt.subplots(1, 2)
+        axs[0].imshow(self.original_image, cmap='gray')
+        axs[0].set_title("Original Image")
+        
+        axs[1].imshow(denoised_image, cmap='gray')
+        axs[1].set_title("High-Frequency Denoised Image")
+        
+        plt.show()
+        
+    def plot_denoise_thresholding(self, threshold=0.0009):
+        frequency_domain = self.fft_2d()
+        row, col = frequency_domain.shape
+
+        magnitude = np.abs(frequency_domain)
+        threshold = np.quantile(magnitude, 1 - threshold)
+        frequency_domain[magnitude > threshold] = 0
+
+        non_zero_coefficients = np.count_nonzero(frequency_domain)
+        total_coefficients = row * col
+        print(f'Non-zero coefficients: {non_zero_coefficients}')
+        print(f'Fraction of non-zero coefficients: {non_zero_coefficients/total_coefficients}')
+
+        denoised_image = self.ifft_2d(frequency_domain)
+        denoised_image = np.real(denoised_image)
+        denoised_image = denoised_image[:self.original_image.shape[0], :self.original_image.shape[1]]
+        
+        fig, axs = plt.subplots(1, 2)
+        axs[0].imshow(self.original_image, cmap='gray')
+        axs[0].set_title("Original Image")
+
+        axs[1].imshow(denoised_image, cmap='gray')
+        axs[1].set_title(f"Thresholding Denoised Image")
+
         plt.show()
         
     def plot_compression(self):
@@ -176,11 +237,15 @@ def main():
     if mode == 1:
         dft.plot_fft()
     elif mode == 2:
-        dft.plot_denoise()
+        dft.plot_denoise_high_frequency()
     elif mode == 3:
         dft.plot_compression()
     elif mode == 4:
         dft.plot_runtime()
+    elif mode == 5:
+        dft.plot_denoise_low_frequency()
+    elif mode == 6:
+        dft.plot_denoise_thresholding()
     else:
         print('Invalid mode. Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime')
         exit()

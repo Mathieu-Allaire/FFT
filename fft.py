@@ -365,7 +365,7 @@ class DiscreteFourierTransform:
         difference = np.abs(reconstructed_image_custom - reconstructed_image_numpy)
 
         # Compare the results
-        fig, axs = plt.subplots(1, 3, figsize=(15, 5))
+        fig, axs = plt.subplots(1, 3)
 
         # Plot custom IFFT result
         axs[0].imshow(reconstructed_image_custom, cmap='gray')

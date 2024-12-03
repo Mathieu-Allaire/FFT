@@ -434,17 +434,15 @@ def main():
     elif mode == 5:
         dft.plot_denoise_low_frequency()
     elif mode == 6:
-        dft.plot_denoise_thresholding()
-    elif mode == 7:
         dft.plot_compression_alternative()
-    elif mode == 8:
+    elif mode == 7:
         dft.validate_fft()
-    elif mode == 9:
+    elif mode == 8:
         dft.validate_ifft()
     else:
         print('''Invalid mode. Mode: 1 for Fast mode, 2 for High Frequency Denoise, 3 for Compress, 4 for Plot runtime, 
-                5 for Low Frequency Denoise, 6 for Thresholding Denoise, 7 for Alternative Compression, 8 for Fast mode validation, 
-                9 for Inverse Fast mode validation''')
+                5 for Low Frequency Denoise, 6 for Alternative Compression, 7 for Fast mode validation, 
+                8 for Inverse Fast mode validation''')
         exit()
     
 if __name__ == '__main__':

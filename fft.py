@@ -311,7 +311,6 @@ class DiscreteFourierTransform:
             array = np.random.rand(size, size)
             naive_time = []
             for _ in range(repetitions):
-                print(f"Repetition {_}")
                 start = time.time()
                 self.dft_2d(array)
                 end = time.time()
@@ -333,14 +332,8 @@ class DiscreteFourierTransform:
 
         # Plot the results
         fig, ax = plt.subplots(figsize=(10, 6))
-        ax.errorbar(
-            sizes, mean_naive_runtimes, yerr=2 * np.array(naive_errors),
-            fmt='-o', label="Naïve DFT (97% Confidence Interval)", capsize=5
-        )
-        ax.errorbar(
-            sizes, mean_fft_runtimes, yerr=2 * np.array(fft_errors),
-            fmt='-o', label="FFT (97% Confidence Interval)", capsize=5
-        )
+        ax.errorbar(sizes, mean_naive_runtimes, yerr=2 * np.array(naive_errors),label="Naïve DFT (97% Confidence Interval)")
+        ax.errorbar(sizes, mean_fft_runtimes, yerr=2 * np.array(fft_errors), label="FFT (97% Confidence Interval)")
         ax.set_title("Runtime Comparison: Naïve DFT vs. FFT")
         ax.set_xlabel("Array Size (N x N)")
         ax.set_ylabel("Runtime (seconds)")

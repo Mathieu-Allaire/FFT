@@ -78,6 +78,14 @@ class DiscreteFourierTransform:
         
         # Combine the results using symmetry properties of the IDFT
         return np.concatenate([even + coeff[:N//2] * odd, even + coeff[N//2:] * odd]) / 2
+
+    def dft_2d(self, array):
+        row_transformed_image = np.apply_along_axis(self.dft, axis=1, arr=array)
+        
+        col_transformed_image = np.apply_along_axis(self.dft, axis=0, arr=row_transformed_image)
+        
+        return col_transformed_image
+
     
     def fft_2d(self):
         row, col = self.resized_image.shape
@@ -117,7 +125,7 @@ class DiscreteFourierTransform:
         axs[0].set_title("Original Image")
 
         # Plot the Fourier Transform; take the absolute value to get the magnitude; log-scaled
-        axs[1].imshow(np.abs(frequency_domain), norm=LogNorm())
+        axs[1].imshow(np.abs(frequency_domain)[:self.original_image.shape[0], :self.original_image.shape[1]], norm=LogNorm())
         axs[1].set_title("Fourier Transform")
         
         plt.show()
@@ -288,10 +296,10 @@ class DiscreteFourierTransform:
         plt.show()
         
     def plot_runtime(self):
-        sizes = [2 ** i for i in range(5, 7)]
-        repetitions = 4  # Number of repetitions to calculate mean and standard deviation
-        naive_runtimes = []  # Mean runtimes for naive DFT
-        fft_runtimes = []  # Mean runtimes for FFT
+        sizes = [2 ** i for i in range(5, 10)]
+        repetitions = 10  # Number of repetitions to calculate mean and standard deviation
+        mean_naive_runtimes = []  # Mean runtimes for naive DFT
+        mean_fft_runtimes = []  # Mean runtimes for FFT
         naive_errors = []  # Standard deviation for naive DFT
         fft_errors = []  # Standard deviation for FFT
 
@@ -300,39 +308,38 @@ class DiscreteFourierTransform:
         for size in sizes:
             print(f"Running for size {size}x{size}")
 
-
             array = np.random.rand(size, size)
-
-
             naive_time = []
             for _ in range(repetitions):
+                print(f"Repetition {_}")
                 start = time.time()
-                _ = np.apply_along_axis(self.dft, axis=0, arr=array)  # Column-wise DFT
-                _ = np.apply_along_axis(self.dft, axis=1, arr=array)  # Row-wise DFT
-                naive_time.append(time.time() - start)
+                self.dft_2d(array)
+                end = time.time()
+                naive_time.append(end - start)
 
-            naive_runtimes.append(np.mean(naive_time))
+            mean_naive_runtimes.append(np.mean(naive_time))
             naive_errors.append(np.std(naive_time))
 
             # Measure runtimes for FFT
             fft_time = []
             for _ in range(repetitions):
                 start = time.time()
-                _ = self.fft_2d()
-                fft_time.append(time.time() - start)
+                self.fft_2d()
+                end = time.time()
+                fft_time.append(end - start)
 
-            fft_runtimes.append(np.mean(fft_time))
+            mean_fft_runtimes.append(np.mean(fft_time))
             fft_errors.append(np.std(fft_time))
 
         # Plot the results
         fig, ax = plt.subplots(figsize=(10, 6))
         ax.errorbar(
-            sizes, naive_runtimes, yerr=2 * np.array(naive_errors),
-            fmt='-o', label="Naïve DFT (97% CI)", capsize=5
+            sizes, mean_naive_runtimes, yerr=2 * np.array(naive_errors),
+            fmt='-o', label="Naïve DFT (97% Confidence Interval)", capsize=5
         )
         ax.errorbar(
-            sizes, fft_runtimes, yerr=2 * np.array(fft_errors),
-            fmt='-o', label="FFT (97% CI)", capsize=5
+            sizes, mean_fft_runtimes, yerr=2 * np.array(fft_errors),
+            fmt='-o', label="FFT (97% Confidence Interval)", capsize=5
         )
         ax.set_title("Runtime Comparison: Naïve DFT vs. FFT")
         ax.set_xlabel("Array Size (N x N)")

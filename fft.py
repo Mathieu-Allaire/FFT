@@ -159,7 +159,7 @@ class DiscreteFourierTransform:
         axs[0].set_title("Original Image")
         
         axs[1].imshow(denoised_image, cmap='gray')
-        axs[1].set_title("Low-Frequency Denoised Image")
+        axs[1].set_title("High-Frequency Denoised Image")
         
         plt.show()
         
@@ -193,7 +193,7 @@ class DiscreteFourierTransform:
         axs[0].set_title("Original Image")
         
         axs[1].imshow(denoised_image, cmap='gray')
-        axs[1].set_title("High-Frequency Denoised Image")
+        axs[1].set_title("Low-Frequency Denoised Image")
         
         plt.show()
         

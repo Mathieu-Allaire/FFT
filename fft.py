@@ -79,36 +79,6 @@ class DiscreteFourierTransform:
         # Combine the results using symmetry properties of the IDFT
         return np.concatenate([even + coeff[:N//2] * odd, even + coeff[N//2:] * odd]) / 2
     
-    def dft_2d(self):
-        row, col = self.resized_image.shape
-        
-        # Perform 1D DFT on rows
-        row_transformed_image = np.zeros((row, col), dtype=np.complex128)
-        for i in range(row):
-            row_transformed_image[i, :] = self.dft(self.resized_image[i, :])
-        
-        # Perform 1D DFT on columns of the transformed image
-        col_transformed_image = np.zeros((row, col), dtype=np.complex128)
-        for j in range(col):
-            col_transformed_image[:, j] = self.dft(row_transformed_image[:, j])
-            
-        return col_transformed_image
-    
-    def idft_2d(self, transformed_image):
-        row, col = transformed_image.shape
-        
-        # Perform 1D IDFT on rows
-        row_transformed_image = np.zeros((row, col), dtype=np.complex128)
-        for i in range(row):
-            row_transformed_image[i, :] = self.idft(transformed_image[i, :])
-        
-        # Perform 1D IDFT on columns of the transformed image
-        col_transformed_image = np.zeros((row, col), dtype=np.complex128)
-        for j in range(col):
-            col_transformed_image[:, j] = self.idft(row_transformed_image[:, j])
-        
-        return col_transformed_image
-    
     def fft_2d(self):
         row, col = self.resized_image.shape
         
@@ -160,7 +130,7 @@ class DiscreteFourierTransform:
         low_frq_row_start, low_frq_row_end = int(row*low_frequency_threshold), int(row*(1-low_frequency_threshold))
         low_frq_col_start, low_frq_col_end = int(col*low_frequency_threshold), int(col*(1-low_frequency_threshold))
         
-        # set the high frequency components to zero, representing a cross-like shape in the frequency domain
+        # set the high frequency components to zero, representing a cross-like shape in the center of the frequency domain
         # We are left with the low frequency components in the corners of the frequency domain
         frequency_domain[low_frq_row_start:low_frq_row_end, :] = 0
         frequency_domain[:, low_frq_col_start:low_frq_col_end] = 0
@@ -194,7 +164,7 @@ class DiscreteFourierTransform:
         high_frq_col_start, high_frq_col_end = int(col*high_frequency_threshold), int(col*(1-high_frequency_threshold))
         
         # set the low frequency components to zero, representing the corners of the frequency domain
-        # We are left with the high frequency components representing a cross-like shape in the frequency domain
+        # We are left with the high frequency components representing a cross-like shape in the center of the frequency domain
         frequency_domain[:high_frq_row_start, :high_frq_col_start] = 0
         frequency_domain[:high_frq_row_start, high_frq_col_end:] = 0
         frequency_domain[high_frq_row_end:, :high_frq_col_start] = 0
@@ -318,8 +288,8 @@ class DiscreteFourierTransform:
         plt.show()
         
     def plot_runtime(self):
-        sizes = [2 ** i for i in range(5, 10)]
-        repetitions = 10  # Number of repetitions to calculate mean and standard deviation
+        sizes = [2 ** i for i in range(5, 7)]
+        repetitions = 4  # Number of repetitions to calculate mean and standard deviation
         naive_runtimes = []  # Mean runtimes for naive DFT
         fft_runtimes = []  # Mean runtimes for FFT
         naive_errors = []  # Standard deviation for naive DFT
@@ -403,30 +373,26 @@ class DiscreteFourierTransform:
         frequency_domain = np.fft.fft2(self.resized_image)
 
         # Custom IFFT
-        reconstructed_image_custom = self.ifft_2d(frequency_domain)
-
+        custom_image = self.ifft_2d(frequency_domain)
         # Numpy IFFT
-        reconstructed_image_numpy = np.fft.ifft2(frequency_domain)
+        numpy_image = np.fft.ifft2(frequency_domain)
 
         # Convert to real components and crop to original image size
-        reconstructed_image_custom = np.real(reconstructed_image_custom)
-        reconstructed_image_custom = reconstructed_image_custom[:self.original_image.shape[0], :self.original_image.shape[1]]
-
-        reconstructed_image_numpy = np.real(reconstructed_image_numpy)
-        reconstructed_image_numpy = reconstructed_image_numpy[:self.original_image.shape[0], :self.original_image.shape[1]]
+        custom_image = np.real(custom_image)[:self.original_image.shape[0], :self.original_image.shape[1]]
+        numpy_image = np.real(numpy_image)[:self.original_image.shape[0], :self.original_image.shape[1]]
         
         # Calculate the difference
-        difference = np.abs(reconstructed_image_custom - reconstructed_image_numpy)
+        difference = np.abs(custom_image - numpy_image)
 
         # Compare the results
         fig, axs = plt.subplots(1, 3)
 
         # Plot custom IFFT result
-        axs[0].imshow(reconstructed_image_custom, cmap='gray')
+        axs[0].imshow(custom_image, cmap='gray')
         axs[0].set_title("Custom IFFT")
 
         # Plot Numpy IFFT result
-        axs[1].imshow(reconstructed_image_numpy, cmap='gray')
+        axs[1].imshow(numpy_image, cmap='gray')
         axs[1].set_title("Numpy IFFT Result")
 
         # Plot the difference
@@ -435,7 +401,6 @@ class DiscreteFourierTransform:
 
         plt.show()
 
-    
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-m', type=int, required=False, help='Mode: 1 for Fast mode, 2 for Denoise, 3 for Compress, 4 for Plot runtime', default=1)

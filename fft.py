@@ -318,7 +318,61 @@ class DiscreteFourierTransform:
         plt.show()
         
     def plot_runtime(self):
-        return 0
+        sizes = [2 ** i for i in range(5, 10)]
+        repetitions = 10  # Number of repetitions to calculate mean and standard deviation
+        naive_runtimes = []  # Mean runtimes for naive DFT
+        fft_runtimes = []  # Mean runtimes for FFT
+        naive_errors = []  # Standard deviation for naive DFT
+        fft_errors = []  # Standard deviation for FFT
+
+        print(f"Sizes list: {sizes}")
+
+        for size in sizes:
+            print(f"Running for size {size}x{size}")
+
+
+            array = np.random.rand(size, size)
+
+
+            naive_time = []
+            for _ in range(repetitions):
+                start = time.time()
+                _ = np.apply_along_axis(self.dft, axis=0, arr=array)  # Column-wise DFT
+                _ = np.apply_along_axis(self.dft, axis=1, arr=array)  # Row-wise DFT
+                naive_time.append(time.time() - start)
+
+            naive_runtimes.append(np.mean(naive_time))
+            naive_errors.append(np.std(naive_time))
+
+            # Measure runtimes for FFT
+            fft_time = []
+            for _ in range(repetitions):
+                start = time.time()
+                _ = self.fft_2d()
+                fft_time.append(time.time() - start)
+
+            fft_runtimes.append(np.mean(fft_time))
+            fft_errors.append(np.std(fft_time))
+
+        # Plot the results
+        fig, ax = plt.subplots(figsize=(10, 6))
+        ax.errorbar(
+            sizes, naive_runtimes, yerr=2 * np.array(naive_errors),
+            fmt='-o', label="Naïve DFT (97% CI)", capsize=5
+        )
+        ax.errorbar(
+            sizes, fft_runtimes, yerr=2 * np.array(fft_errors),
+            fmt='-o', label="FFT (97% CI)", capsize=5
+        )
+        ax.set_title("Runtime Comparison: Naïve DFT vs. FFT")
+        ax.set_xlabel("Array Size (N x N)")
+        ax.set_ylabel("Runtime (seconds)")
+        ax.set_xticks(sizes)
+        ax.set_xticklabels([f"{size}x{size}" for size in sizes])
+        ax.legend()
+        ax.grid(True)
+        plt.tight_layout()
+        plt.show()
     
     def validate_fft(self):
         # Custom FFT

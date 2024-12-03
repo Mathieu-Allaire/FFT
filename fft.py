@@ -404,7 +404,7 @@ class DiscreteFourierTransform:
 
         # Plot the difference
         axs[2].imshow(difference, cmap='hot')
-        axs[2].set_title("Difference (Thresholded)")
+        axs[2].set_title("Difference")
 
         plt.show()
 

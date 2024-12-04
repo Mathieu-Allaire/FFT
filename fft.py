@@ -196,7 +196,7 @@ class DiscreteFourierTransform:
         
         plt.show()
         
-        def plot_compression(self):
+    def plot_compression(self):
         frequency_domain = self.fft_2d()
         magnitude = np.abs(frequency_domain)
         row, col = frequency_domain.shape
@@ -204,8 +204,6 @@ class DiscreteFourierTransform:
 
         fig, axs = plt.subplots(2, 3, figsize=(12, 8))
         axs = axs.flatten()
-
-
 
         # Compress the image for different compression levels
         for i, compression_level in enumerate(compression_levels):
@@ -218,7 +216,9 @@ class DiscreteFourierTransform:
             frequency_domain_compressed = frequency_domain * mask
 
             non_zero_coefficients = np.count_nonzero(frequency_domain_compressed)
+            total_coefficients = row * col
             print(f'Non-zero coefficients: {non_zero_coefficients}')
+            print(f'Fraction of non-zero coefficients: {non_zero_coefficients/total_coefficients}')
 
             # Perform the inverse Fourier Transform to get the compressed image
             compressed_image = self.ifft_2d(frequency_domain_compressed)
@@ -266,8 +266,9 @@ class DiscreteFourierTransform:
             frequency_domain_compressed = frequency_domain * combined_mask
 
             non_zero_coefficients = np.count_nonzero(frequency_domain_compressed)
+            total_coefficients = row * col
             print(f'Non-zero coefficients: {non_zero_coefficients}')
-
+            print(f'Fraction of non-zero coefficients: {non_zero_coefficients/total_coefficients}')
 
             # Perform the inverse Fourier Transform to get the compressed image
             compressed_image = self.ifft_2d(frequency_domain_compressed)

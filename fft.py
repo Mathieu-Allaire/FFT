@@ -197,49 +197,42 @@ class DiscreteFourierTransform:
         
         plt.show()
         
-    def plot_compression(self):
+        def plot_compression(self):
         frequency_domain = self.fft_2d()
         magnitude = np.abs(frequency_domain)
         row, col = frequency_domain.shape
         compression_levels = [0, 50, 90, 95, 99, 99.9]
-        
+
         fig, axs = plt.subplots(2, 3, figsize=(12, 8))
         axs = axs.flatten()
-        
-        total_coefficients = row * col
-        
+
+
+
         # Compress the image for different compression levels
         for i, compression_level in enumerate(compression_levels):
             print(f'Compression level: {compression_level}%')
-            
+
             # Threshold the magnitude of the frequency domain
             threshold = np.percentile(magnitude, compression_level)
             mask = magnitude >= threshold
             # Multiply the frequency domain with the mask to set the high frequency components to zero
             frequency_domain_compressed = frequency_domain * mask
-            
-            non_zero_coefficients = np.count_nonzero(frequency_domain)
-            total_coefficients = row * col
+
+            non_zero_coefficients = np.count_nonzero(frequency_domain_compressed)
             print(f'Non-zero coefficients: {non_zero_coefficients}')
-            print(f'Fraction of non-zero coefficients: {non_zero_coefficients/total_coefficients}')
-            
+
             # Perform the inverse Fourier Transform to get the compressed image
             compressed_image = self.ifft_2d(frequency_domain_compressed)
             compressed_image = np.real(compressed_image)
             compressed_image = compressed_image[:self.original_image.shape[0], :self.original_image.shape[1]]
-            
-            # Save the compressed image to determine the file size
-            file_name = f'compressed_image_{compression_level}.png'
-            cv2.imwrite(file_name, compressed_image)
-            file_size = os.path.getsize(file_name)
-            print(f"Size of {file_name}: {file_size} bytes")
+
 
             axs[i].imshow(compressed_image, cmap='gray')
             axs[i].set_title(f'{compression_level}% Compression')
-        
+
         plt.tight_layout()
         plt.show()
-    
+
     def plot_compression_alternative(self):
         frequency_domain = self.fft_2d()
         magnitude = np.abs(frequency_domain)
@@ -249,8 +242,6 @@ class DiscreteFourierTransform:
         fig, axs = plt.subplots(2, 3, figsize=(12, 8))
         axs = axs.flatten()
 
-        total_coefficients = row * col
-
         # Compress the image for different compression levels
         for i, compression_level in enumerate(compression_levels):
             print(f'Compression level: {compression_level}%')
@@ -259,35 +250,30 @@ class DiscreteFourierTransform:
             high_threshold = np.percentile(magnitude, compression_level)
             high_mask = magnitude >= high_threshold
 
-            low_frequency_threshold = 0.05  # Define a threshold for "low frequencies"
-            
+            low_frequency_threshold = 0.1  # Define a threshold for "low frequencies"
+
             # Determine the boundaries for the low frequency components
-            low_frq_row_start, low_frq_row_end = int(row * low_frequency_threshold), int(row * (1 - low_frequency_threshold))
-            low_frq_col_start, low_frq_col_end = int(col * low_frequency_threshold), int(col * (1 - low_frequency_threshold))
+            low_frq_row_start, low_frq_row_end = int(row * low_frequency_threshold), int(
+                row * (1 - low_frequency_threshold))
+            low_frq_col_start, low_frq_col_end = int(col * low_frequency_threshold), int(
+                col * (1 - low_frequency_threshold))
             low_mask = np.zeros_like(magnitude, dtype=bool)
             low_mask[low_frq_row_start:low_frq_row_end, low_frq_col_start:low_frq_col_end] = True
 
             # Combine the high and low frequency masks
             combined_mask = high_mask | low_mask
-            
+
             # Multiply the frequency domain with the mask to set the high frequency components to zero
             frequency_domain_compressed = frequency_domain * combined_mask
-            
-            non_zero_coefficients = np.count_nonzero(frequency_domain)
-            total_coefficients = row * col
+
+            non_zero_coefficients = np.count_nonzero(frequency_domain_compressed)
             print(f'Non-zero coefficients: {non_zero_coefficients}')
-            print(f'Fraction of non-zero coefficients: {non_zero_coefficients/total_coefficients}')
+
 
             # Perform the inverse Fourier Transform to get the compressed image
             compressed_image = self.ifft_2d(frequency_domain_compressed)
             compressed_image = np.real(compressed_image)
             compressed_image = compressed_image[:self.original_image.shape[0], :self.original_image.shape[1]]
-
-            # Save the compressed image to determine the file size
-            file_name = f'compressed_image_{compression_level}.png'
-            cv2.imwrite(file_name, compressed_image)
-            file_size = os.path.getsize(file_name)
-            print(f"Size of {file_name}: {file_size} bytes")
 
             axs[i].imshow(compressed_image, cmap='gray')
             axs[i].set_title(f'{compression_level}% Compression')

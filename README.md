@@ -24,7 +24,9 @@ Run the script with the following command:
 
 **Note**: If `moonlanding.png` is missing and no image is provided, the script will not work.
 
-Npm Install (If you do not already have them) the following packages for the script to work:
+**Note**: Python Version used: 3.12
+
+**Note**: Npm Install (If you do not already have them) the following packages for the script to work:
 - numpy
 - matplotlib
 - opencv

@@ -20,4 +20,11 @@ Run the script with the following command:
 
 - **-i image_file**: Path to the image file (default: `moonlanding.png`).
 
+- Example: python fft.py -m 6 -i moonlanding.png
+
 **Note**: If `moonlanding.png` is missing and no image is provided, the script will not work.
+
+Npm Install (If you do not already have them) the following packages for the script to work:
+- numpy
+- matplotlib
+- opencv
